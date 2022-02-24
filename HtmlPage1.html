@@ -1,0 +1,294 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+
+    <link href="Content/bootstrap.css" rel="stylesheet" />
+    <script src="Scripts/jquery-3.4.1.js"></script>
+    <script src="Scripts/bootstrap.js"></script>
+
+    <style type="text/css">
+        a:hover {
+            cursor: pointer;
+        }
+    </style>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            getalldata();
+            $("#save").click(function () {
+                var Mastermodel = {
+                    code: $("#code").val(),
+                    firstname: $("#firstname").val(),
+                    lastname: $("#lastname").val(),
+                    department: $("#department").val(),
+                    address: $("#address").val(),
+                    joiningdate: $("#joiningdate").val(),
+                    gender: $("input[name=gender]:checked").val(),
+                    shtml: $("#html").is(":checked") == true ? 1 : 0,
+                    scss: $("#css").is(":checked") == true ? 1 : 0,
+                    sjavascript: $("#javascript").is(":checked") == true ? 1 : 0
+                }
+                console.log(Mastermodel);
+
+                if (Mastermodel.code == 0) {
+                    $.ajax({
+                        type: 'POST',
+                        url: 'api/Student/insert',
+                        dataType: 'json',
+                        data: Mastermodel,
+                        success: function () {
+                            alert('Data insert..');
+                            resetform();
+                            getalldata();
+                        }
+                    });
+                }
+                else {
+                    $.ajax({
+                        type: 'PUT',
+                        url: 'api/Student/update/' + Mastermodel.code,
+                        dataType: 'json',
+                        data: Mastermodel,
+                        success: function () {
+                            alert('Data Update..');
+                            resetform();
+                            getalldata();
+                        }
+                    });
+                }
+
+            });
+                $("#delete").click(function () {
+                var Mastermodel = {
+                    code: $("#code").val()
+                }
+                if (Mastermodel.code == 0) {
+                    alert('please select the data');
+                }
+                else {
+                    $.ajax({
+                        type: 'DELETE',
+                        url: 'api/Student/' + Mastermodel.code +'/delete',
+                        dataType: 'json',
+                        data: Mastermodel,
+                        success: function (data) {
+                            alert('Data delete..');
+                            resetform();
+                            getalldata();
+                        }
+                    });
+                }
+            });
+
+        });
+
+       
+
+        //resetform
+        function resetform() {
+            var masterForm = $("form");
+            masterForm[0].reset();
+            $("#code").val(0);
+        }
+
+        //getalldata
+        function getalldata() {
+            var masterlist = $("#showdata");
+            $.ajax({
+                type: 'GET',
+                url: 'api/Student',
+                dataType: 'Json',
+                success: function (data) {
+                    masterlist.empty();
+                    $.each(data, function (index, value) {
+
+                        value.department == 0 ? value.department = "IT" : "";
+                        value.department == 1 ? value.department = "ADMIN" :"";
+                        value.department == 2 ? value.department = "HR" : "";
+
+                        value.gender == 1 ? value.gender = "female" :value.gender = "male";
+
+                        value.shtml == 1 ? value.shtml = "HTML" : value.shtml= "";
+                        value.scss == 1 ? value.scss = "CSS" : value.scss="";
+                        value.sjavascript == 1 ? value.sjavascript = "Javascript" : value.sjavascript = "";
+
+
+                        //var dd = joiningdate.getDate() > 9 ? joiningdate.getDate() : ('0' + joiningdate.getDate());
+                        //var mm = joiningdate.getMonth() > 8 ? joiningdate.getMonth() + 1 : ('0' + (joiningdate.getMonth() + 1));
+                        //var yy = joiningdate.getFullYear();
+                        //var datestring = yy + "-" + mm + "-" + dd;
+
+                        //value.joiningdate = datestring;
+                        
+                        masterlist.append("<tr><td width='10%'><a onClick='getSelectedMaster(" + value.code + ")'>Select</a></td><td width='10%'>" + value.firstname + "</td><td width='10%'>" + value.lastname + "</td><td width='10%'>" + value.gender + "</td><td width='10%'>" + value.department + "</td><td width='10%'>" + value.shtml + "</td><td width='10%'>" + value.scss + "</td><td width='10%'>" + value.sjavascript + "</td><td width='10%'>" + value.address + "</td><td width='10%'>" + value.joiningdate + "</td></tr>");
+                    });
+                }
+            });
+        }
+
+
+        //getselectdat
+
+
+        function getSelectedMaster(code) {
+            $.ajax({
+                type: 'GET',
+                url: 'api/Student/' + code,
+                dataType: 'Json',
+                success: function (data) {
+
+                    $("#code").val(data[0].code);
+                    $("#firstname").val(data[0].firstname);
+                    $("#lastname").val(data[0].lastname);
+
+                    //radio
+                    if (data[0].gender == '0') {
+                        $("#male").prop('checked', true);
+                    }
+                    else {
+                        $("#female").prop('checked', true);
+                    }
+                    //dropdown
+                    if (data[0].shtml == '1') {
+                        $("#html").prop('checked', true);
+                    }
+                    else {
+                        $("#css").prop('checked', false);
+                    }
+                    if (data[0].scss == '1') {
+                        $("#css").prop('checked', true);
+                    }
+                    else {
+                        $("#css").prop('checked', false);
+                    }
+                    if (data[0].sjavascript == '1') {
+                        $("#javascript").prop('checked', true);
+                    }
+                    else {
+                        $("#javascript").prop('checked', false);
+                    }
+
+                    //department
+                    $("#department").val(data[0].department);
+
+                    //address
+
+                    $("#address").val(data[0].address);
+
+                    //date
+
+                    var date = new Date(data[0].joiningdate);
+                  
+                    var dd = date.getDate() > 9 ? date.getDate() : ('0' + date.getDate());
+                    var mm = date.getMonth() > 8 ? date.getMonth() + 1 : ('0' + (date.getMonth() + 1));
+                    var yy = date.getFullYear();
+                    var datestring = yy + "-" + mm + "-" + dd;
+                    $("#joiningdate").val(datestring);
+
+
+
+                }
+            });
+         
+        }
+
+
+    </script>
+
+    
+</head>
+<body>
+
+    <h2 class="text-center">Master </h2>
+    <hr />
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <form onsubmit="save()">
+                    <!--firstname-->
+                    <div class="form-group">
+                        <label for="Name">Firstname</label>
+                        <input type="hidden" id="code" value="0" />
+                        <input type="text" name="firstname" id="firstname" class="form-control" placeholder="Enter Firstname" autocomplete="off" required />
+                    </div>
+                    <!--lastname-->
+                    <div class="form-group">
+                        <label for="lastname">Lastname</label>
+
+                        <input type="text" name="lastname" id="lastname" class="form-control" placeholder="Enter Lastname" autocomplete="off" required />
+                    </div>
+                    <!--gender-->
+                    <div id="radio" class="form-group">
+                        <label for="gender">Gender </label><br />
+                        <input type="radio" id="male" name="gender" value="0" />Male
+                        <input type="radio" id="female" name="gender" value="1" />Female
+                    </div>
+                    <!--department-->
+                    <div class="form-group">
+                        <label for="Department">Department: </label>
+                        <select name="department" id="department" class="form-control">
+                            <option value="0">IT</option>
+                            <option value="1">Admin</option>
+                            <option value="2">HR</option>
+                        </select>
+                    </div>
+                    <!--subject-->
+                    <div id="checkbox" class="form-group">
+                        <label for="gender">Subject </label><br />
+                        <input type="checkbox" id="html" value="HTML" />HTML
+                        <input type="checkbox" id="css" value="CSS" />CSS
+                        <input type="checkbox" id="javascript" value="Javascript" />Javascript
+
+                    </div>
+                    <!--address-->
+                    <div class="form-group">
+                        <label for="description">Address</label>
+                        <textarea name="address" id="address" class="form-control" placeholder="Enter Adddres" autocomplete="off"></textarea>
+                    </div>
+                    <!--joing date-->
+                    <div class="form-group">
+                        <label for="date">Joining Date</label>
+                        <input type="date" id="joiningdate" value="" class="form-control"/>
+                    </div>
+
+                    <button type="button" id="save" class="btn btn-success">Save</button>
+                    <button type="button" id="delete" class="btn btn-danger">Delete</button>
+                    <button type="button" onclick="resetform()" class="btn btn-light">Clear</button><br /><br />
+
+                </form>
+            </div>
+            <hr />      
+            <br />
+            <br />
+            <div class="col-md">
+                <div class="row">
+                    <div class="col-md-12">
+                        <span>List of master data</span>
+                    </div>
+                    <div class="col-md-12">
+                        <table width="100%" class="table">
+                            <tr>
+                                <th width="10%">Action</th>
+                                <th width="10%">Firstname</th>
+                                <th width="10%">Lastname</th>
+                                <th width="10%">Gender</th>
+                                <th width="10%">Department</th>
+                                <th width="10%">html</th>
+                                <th width="10%">css</th>
+                                <th width="10%">javascript</th>
+                                <th width="10%">Address</th>
+                                <th width="10%">Joiningdate</th>
+                                <th></th>
+                            </tr>
+                        </table>
+                        <table id="showdata" width="100%" class="table"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
